@@ -1,0 +1,1 @@
+<?php header("Location: https://tickets.cxsummit.com.co/CompraTickets/public/SeleccionBoletas");?>
