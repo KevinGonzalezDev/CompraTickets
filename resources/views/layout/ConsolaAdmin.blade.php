@@ -17,7 +17,7 @@
         <?php echo '<script type="text/javascript" src = "js/dataTables.bootstrap4.min.js?v='.date("Y-m-d H:i:s").'"></script>';?>
         <?php echo '<script type="text/javascript" src = "js/dataTables.js?v='.date("Y-m-d H:i:s").'"></script>';?>
         <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-        
+
         <?php echo '<script type="text/javascript" src = "js/jquery-ui.min.js?v='.date("Y-m-d H:i:s").'"></script>';?>
         <?php echo '<script type="text/javascript" src = "js/config.js?v='.date("Y-m-d H:i:s").'"></script>';?>
 
@@ -27,7 +27,7 @@
 
         <?php echo '<script type="text/javascript" src = "js/jquery-ui.min.js?v='.date("Y-m-d H:i:s").'"></script>';?>
         <?php echo '<script type="text/javascript" src = "js/bootstrap-datepicker.js?v='.date("Y-m-d H:i:s").'"></script>';?>
-        
+
         <style>
             html, body {
                 background-color: #fff;
@@ -107,7 +107,7 @@
                 -moz-box-shadow: 10px 10px 5px -6px rgba(166,163,166,1);
                 box-shadow: 10px 10px 5px -6px rgba(166,163,166,1);
             }
-            
+
             .Invitados{
                 background-color:#563CA1;
             }
@@ -197,7 +197,7 @@
                 </tr>
             </table>
         </div>
-        
+
         <div class="modal fade" id="ModalEdit" data-backdrop="static" tabindex="-1" role="dialog" aria-labelledby="ModalEdit" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document" id = "ModalContentForm" >
                 <div class="content_modal modal-content">

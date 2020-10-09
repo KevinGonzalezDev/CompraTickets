@@ -38,22 +38,39 @@ class AdminController extends Controller{
     }
 
     public function ConsultarUsuarios(){
-        $usuarios = App\comprador::all();
-        Return view('ConsultarUsuarios', compact('usuarios'));
+        //$usuarios = App\comprador::all();
+        $usuarios = DB::SELECT("SELECT "
+        ."c.email, c.name, c.apellido, c.celular, c.empresa , ct.type_tickets_id,  sum(1) as Cantidad "
+        . "FROM comprador_ticket ct "
+        . "inner join comprador c on ct.comprador_id = c.id "
+        ."group by c.email, c.name, c.apellido, c.celular, c.empresa,ct.type_tickets_id ");
+
+/*
+        $usuarios = DB::SELECT("SELECT "
+                . "t.name, t.photo, t.valor, t.include_principal, t.include_normal, t.estado,"
+                . "t.taller, tt.nombre as TipoComprador "
+                . "FROM type_tickets t "
+                . "inner join tipocomprador tt on t.tipocomprador_id = tt.id
+				order by t.name");
+*/
+        $comprador_ticket = DB::SELECT('SELECT * FROM comprador_ticket');
+
+
+        Return view('ConsultarUsuarios', compact('usuarios'),compact('comprador_ticket'));
     }
 
     public function SeleccionarUsuarios(){
         //$SelectAllUsers = DB::SELECT("SELECT * FROM comprador");
         //return view('ConsultarUsuarios')->with('SelectAllUsers', $SelectAllUsers);
     }
-    
+
     public function Ingreso(){
         $Mensaje = DB::SELECT("SELECT ValorText "
                 . "FROM config "
                 . "WHERE Campo = 'MENSAJE_LOGIN' "
                 . "ORDER by id asc");
         $ErroM = "";
-        
+
         if ( session('Time') > date("Y-m-d H:i:s") ){
             return view('Bienvenida');
         }else{
@@ -69,33 +86,49 @@ class AdminController extends Controller{
             return view('inicio')->with('datos',$datos);
         }
     }
-    
+
     public function CerrarSesion(){
         session()->forget('Time');
         return redirect()->route('loginAdmin');
     }
-    
+
     public function validaringreso(){
         $Credentials = $this->validate(request(),[
            'User' => 'required|string',
            'inputPassword' => 'required|string'
         ]);
-        
-        
-        $UserValidate = DB::SELECT("SELECT id, user, nombre "
+
+
+        $UserValidate = DB::SELECT("SELECT id, user, nombre, perfil "
                 . "from users "
                 . "where user = '". addslashes($Credentials['User'])."' and estado = 1 "
                 . "and "
                 . "pwd = '". md5("HolaCaremonda!!".($Credentials['inputPassword']))."';"
                 );
-        if( $UserValidate ){
+
+
+        if( $UserValidate){
             if( !empty($UserValidate[0]->nombre)){
-            
+
                 session()->flush();
                 session(['user' => $UserValidate[0]->user]);
                 session(['keyUser' => $UserValidate[0]->id]);
-                
-                return redirect()->route('ConsoleAdmin');
+
+
+
+
+                $tipoUsuario = $UserValidate[0]->perfil;
+
+                switch ($tipoUsuario) {
+                  case 1:
+                      return redirect()->route('ConsoleAdmin');
+                    break;
+                    case 2:
+                        return redirect()->route('ConsultarUsuarios');
+                    break;
+
+                }
+
             }else{
                 return redirect()->route('LoginAdmin');
             }
@@ -103,14 +136,14 @@ class AdminController extends Controller{
             return redirect()->route('LoginAdmin');
         }
     }
-    
+
     public function ListTipoComprador(){
         $sql = DB::SELECT("SELECT id, nombre from tipocomprador ");
         return response()->json([
             'info'=>$sql
             ]);
     }
-    
+
     public function ValidaCodigo(){
         $sql = DB::SELECT("SELECT id,codigo, porcentaje "
                 . "from codigos_descuento "
@@ -127,12 +160,12 @@ class AdminController extends Controller{
             ]);
         }
     }
-    
+
     public function ConfirmacionCompraPs($id){
         $datos = ['info'=>$id];
         return view('compraboleta')->with('datos',$datos);
     }
-    
+
     public function SeleccionBoletas(){
         $sql = DB::SELECT("SELECT t.id,"
                 . "t.name, t.photo, format(t.valor,0) as valor, t.cantidad, t.dolar,t.include_principal, t.include_normal, t.estado,"
@@ -150,24 +183,24 @@ class AdminController extends Controller{
         $datos = ['info'=>$sql];
         return view('compraboleta')->with('datos',$datos);
     }
-    
+
     public function ListarBoletas(){
         $sql = DB::SELECT("SELECT "
                 . "t.name, t.photo, t.valor, t.include_principal, t.include_normal, t.estado,"
                 . "t.taller, tt.nombre as TipoComprador "
                 . "FROM type_tickets t "
-                . "inner join tipocomprador tt on t.tipocomprador_id = tt.id  
+                . "inner join tipocomprador tt on t.tipocomprador_id = tt.id
 				order by t.name");
         return response()->json([
             'info'=>$sql
             ]);
     }
-    
+
     public function DatosPayU($id){
         DB::beginTransaction();
         try {
-            
-            
+
+
             DB::table('facturacion')
             ->where('id', $id)
             ->update([
@@ -186,29 +219,29 @@ class AdminController extends Controller{
                 $array['persona'] = $sql[0]->name;
                 $array['idtk'] = $id;
                 (new MailController)->Notificacion($array);
-                return redirect()->route('ConfirmacionCompra'); 
+                return redirect()->route('ConfirmacionCompra');
             }else{
-                return redirect()->route('ErrorCompra'); 
+                return redirect()->route('ErrorCompra');
             }
         } catch (\PDOException $exception) {
             error_log("Error - Crear Boleta: " . $exception->getMessage());
-            return redirect()->route('ErrorCompra'); 
-            
+            return redirect()->route('ErrorCompra');
+
         }
     }
-    
+
     public function ErrorCompra(){
         return view('error');
     }
     public function ConfirmacionCompra(){
         return view('personaConfirm');
     }
-    
+
     public function GuardarTicketsCompra(){
         DB::beginTransaction();
         try {
-            
-            
+
+
             DB::table('comprador')
             ->insert([
                 'email' => request()->get('correo'),
@@ -225,14 +258,14 @@ class AdminController extends Controller{
             $imp = 0;
             for($i = 0; $i < count($tr) ;$i++){
                 $valor += ($tr[$i]->valor*$tr[$i]->cantidad);
-                
+
             }
             $imp = request()->get('impuesto');
             $desc = 0;
             $idx = 0;
 			$impuesto = ($valor*19)/100;
             if( !empty(request()->get('descuento')) ){
-				
+
                 $desc = request()->get('descuento');
 				$valor = $valor-(($valor*$desc)/100);
 				$impuesto = ($valor*19)/100;
@@ -275,7 +308,7 @@ class AdminController extends Controller{
                 }
             }
             DB::commit();
-            
+
             return response()->json([
             'info'=>1,
             'Id'=>$idTk
@@ -288,20 +321,20 @@ class AdminController extends Controller{
             ]);
         }
     }
-    
+
 	public function GuardarTicketsCompraLC(){
         DB::beginTransaction();
         try {
-            
+
             $idComprador = request()->get('iduser');
             $tr = json_decode(request()->get('ArrayBoletas'));
             $valor = 0;
             $imp = 0;
             for($i = 0; $i < count($tr) ;$i++){
                 $valor += ($tr[$i]->valor*$tr[$i]->cantidad);
-                
+
             }
-			
+
             $imp = request()->get('impuesto');
             $desc = 0;
             $idx = 0;
@@ -349,7 +382,7 @@ class AdminController extends Controller{
                 }
             }
             DB::commit();
-            
+
             return response()->json([
             'info'=>1,
             'Id'=>$idTk
@@ -362,7 +395,7 @@ class AdminController extends Controller{
             ]);
         }
     }
-    
+
     public function formPayUP($id){
         $sql = DB::SELECT("SELECT "
                 . "id, valorcompra, impuesto, (valorcompra+impuesto) as Total,email from "
@@ -377,7 +410,7 @@ class AdminController extends Controller{
             $total = $t->impuesto + $t->valorcompra;
             $id = $t->id;
         }
-        
+
         $p = DB::sELECT("SELECT "
                 . "merchanid, accountid, apikey, url "
                 . "from payu where estado = 1");
@@ -389,11 +422,11 @@ class AdminController extends Controller{
         $datos = ['info'=>$sql,'pay'=>$p];
         return view('formPPayU')->with('datos',$datos);
     }
-    
+
     public function GuardarTicketsCompraE(){
         DB::beginTransaction();
         try {
-            
+
             DB::table('comprador')
             ->insert([
                 'email' => request()->get('correo'),
@@ -411,7 +444,7 @@ class AdminController extends Controller{
             $imp = 0;
             for($i = 0; $i < count($tr) ;$i++){
                 $valor += ($tr[$i]->valor*$tr[$i]->cantidad);
-                
+
             }
             $imp = request()->get('impuesto');
             $desc = 0;
@@ -471,7 +504,7 @@ class AdminController extends Controller{
             $array['persona'] = request()->get('name');
             $array['idtk'] = $idTk;
             //(new MailController)->Notificacion($array);
-            //return redirect()->route('ConfirmacionCompra'); 
+            //return redirect()->route('ConfirmacionCompra');
             return response()->json([
             'info'=>1,
             'Id'=>$idTk
@@ -484,18 +517,18 @@ class AdminController extends Controller{
             ]);
         }
     }
-    
+
 	public function GuardarTicketsCompraELC(){
         DB::beginTransaction();
         try {
-            
+
             $idComprador = request()->get('iduser');
             $tr = json_decode(request()->get('ArrayBoletas'));
             $valor = 0;
             $imp = 0;
             for($i = 0; $i < count($tr) ;$i++){
                 $valor += ($tr[$i]->valor*$tr[$i]->cantidad);
-                
+
             }
             $imp = request()->get('impuesto');
             $desc = 0;
@@ -555,7 +588,7 @@ class AdminController extends Controller{
             $array['persona'] = request()->get('name');
             $array['idtk'] = $idTk;
             //(new MailController)->Notificacion($array);
-            //return redirect()->route('ConfirmacionCompra'); 
+            //return redirect()->route('ConfirmacionCompra');
             return response()->json([
             'info'=>1,
             'Id'=>$idTk
@@ -568,16 +601,16 @@ class AdminController extends Controller{
             ]);
         }
     }
-    
+
     public function AddBoleta(Request $request){
         DB::beginTransaction();
         try {
             $NombreArchivo = date("Y_m_d_H_i_s")."Foto_".request()->file('foto1')->getClientOriginalName();
             request()->file('foto1')->storeAs('Boletas/',$NombreArchivo);
-            
+
             $NombreArchivo2 = date("Y_m_d_H_i_s")."FotoN_".request()->file('foto2')->getClientOriginalName();
             request()->file('foto2')->storeAs('Boletas/',$NombreArchivo2);
-            
+
             $id = DB::table('type_tickets')
             ->insert([
                 'name' => request()->get('nboleta'),
@@ -595,27 +628,27 @@ class AdminController extends Controller{
                 'fecha' => date("Y-m-d H:i:s")
             ]);
             DB::commit();
-            return redirect()->route('ConsoleAdmin'); 
+            return redirect()->route('ConsoleAdmin');
         } catch (\PDOException $exception) {
             error_log("Error - Crear Boleta: " . $exception->getMessage());
             throw new \PDOException("Error - Crear Boleta: " . $exception->getMessage());
-            return redirect()->route('ConsoleAdmin'); 
+            return redirect()->route('ConsoleAdmin');
         }
     }
-    
+
     public function ConsoleAdmin(){
         return view('layout.ConsolaAdmin');
     }
-    
+
     public function LoginAdmin(){
         return view('layout.loginAdmin');
     }
-    
+
     public function Sitex(){
-        
+
         return view('Events');
     }
-    
+
     public function RegistroP(){
         $sql = DB::SELECT("SELECT t.id,"
                 . "t.name, t.photo,t.photo2, format(t.valor,0) as valor, t.cantidad, t.dolar, t.valor as valors, t.include_principal, t.include_normal, t.estado,"
@@ -630,13 +663,13 @@ class AdminController extends Controller{
                     . "");
             $d->comprados = $d->cantidad - $sqlcomprados[0]->Comprados;
         }
-        
+
         $sqlC = DB::sELECT("SELECT  id, concept, DATEDIFF(value, '".date("Y-m-d")."') as Fecha from configpage "
                 . "where concept = 'FECHA_DESCUENTO'");
         $datos = ['info'=>$sql,'fecha'=>$sqlC[0]->Fecha,'fechaA'=>date("Y-m-d")];
         return view('personaR')->with('datos',$datos);
     }
-    
+
     public function RegistroE(){
         $sql = DB::SELECT("SELECT t.id,"
                 . "t.name, t.photo, t.photo2,format(t.valor,0) as valor, t.valor as valors, t.cantidad, t.dolar, t.include_principal, t.include_normal, t.estado,"
@@ -656,8 +689,8 @@ class AdminController extends Controller{
         $datos = ['info'=>$sql,'fecha'=>$sqlC[0]->Fecha,'fechaA'=>date("Y-m-d")];
         return view('empresaR')->with('datos',$datos);
     }
-    
-	
+
+
     public function ValidarAsociado(){
         $sql = DB::SELECT("SELECT id from "
                 . "asociados where "
@@ -670,17 +703,17 @@ class AdminController extends Controller{
             'info'=>$x
             ]);
     }
-    
+
 	public function DatosFacturacion(){
-		$sql = DB::SELECT("SELECT * 
-		FROM facturacion 
+		$sql = DB::SELECT("SELECT *
+		FROM facturacion
 		WHERE idcomprador = ".request()->get('codigo')." limit 1 ");
 		return response()->json([
             'info'=>$sql
             ]);
-		
+
 	}
-	
+
     public function EnviarLinkBoletas(){
         $s = DB::SELECT("SELECT c.id,"
                 . "c.nombre, c.apellido, c.genero, c.noidentificacion, "
@@ -694,13 +727,13 @@ class AdminController extends Controller{
             $array['persona'] = $t->nombre." ".$t->apellido;
             $array['idtk'] = $t->id;
             (new MailController)->NotificacionBoletas($array);
-            
+
         }
 		return response()->json([
             'info'=>1
             ]);
     }
-    
+
     public function ConfirmacionParticipantes($id){
         $sql = DB::SELECT("SELECT distinct t.id,c.idfacturacion,"
                 . "t.name, t.photo,t.photo2, format(t.valor,0) as valor, t.valor as valors, t.include_principal, t.include_normal, t.estado,"
@@ -721,7 +754,7 @@ class AdminController extends Controller{
                 . "inner join comprador_ticket c on c.type_tickets_id = t.id "
                 . "where c.idfacturacion = $id "
                 . "");
-        
+
         foreach($sql2  as $t){
             $t->sql = "SELECT distinct t.id,c.idfacturacion,c.id as idx , "
                 . "t.name, t.photo,t.photo2, format(t.valor,0) as valor, t.valor as valors, t.include_principal, t.include_normal, t.estado,"
@@ -734,7 +767,7 @@ class AdminController extends Controller{
             $taller = DB::SELECT("SELECT distinct id, nombre from talleres where "
                     . "idticket = ".$t->id);
             $t->talleres = $taller;
-			
+
             $s = DB::SELECT("SELECT distinct c.id,"
                 . "c.nombre, c.apellido, c.genero, c.noidentificacion, "
                 . "c.correo, c.celular, c.pais, c.indicativo, c.ciudad, c.direccion,c.idfacturacion "
@@ -745,11 +778,11 @@ class AdminController extends Controller{
         $datos = ['info'=>$sql,'info2'=>$sql2];
         return view('confirmacionParticipantes')->with('datos',$datos);
     }
-	
+
 	public function IngresoClientes(){
 		$sqlC = DB::sELECT("SELECT  id, concept, DATEDIFF(value, '".date("Y-m-d")."') as Fecha from configpage "
                 . "where concept = 'FECHA_DESCUENTO'");
-        
+
 		$sql = DB::SELECT("SELECT t.id,tt.id as idtipo,"
                 . "t.name, t.photo,t.photo2, format(t.valor,0) as valor, t.cantidad, t.dolar, t.valor as valors, t.include_principal, t.include_normal, t.estado,"
                 . "t.taller, tt.nombre as TipoComprador "
@@ -763,12 +796,12 @@ class AdminController extends Controller{
                     . "");
             $d->comprados = $d->cantidad - $sqlcomprados[0]->Comprados;
         }
-		
+
 		$datos = ['info'=>$sql,'fecha'=>$sqlC[0]->Fecha,'fechaA'=>date("Y-m-d")];
-		
+
 		return view('IngresoClientes')->with('datos',$datos);
     }
-	
+
 	public function LoginClientesEx(){
 		$p = md5("HolaPayU".request()->get('pwd'));
 		$sqlC = DB::sELECT("SELECT  id, email from comprador "
@@ -779,7 +812,7 @@ class AdminController extends Controller{
                 . "where email = '".request()->get('correo')."' and psw = '$p'"
             ]);
 	}
-	
+
     public function RegistroParticipantes($id){
         $sql = DB::SELECT("SELECT distinct t.id,"
                 . "t.name, t.photo, t.photo2,format(t.valor,0) as valor, t.valor as valors, t.include_principal, t.include_normal, t.estado,"
@@ -800,7 +833,7 @@ class AdminController extends Controller{
                 . "inner join comprador_ticket c on c.type_tickets_id = t.id "
                 . "where c.idfacturacion = $id "
                 . "");
-        
+
         foreach($sql2  as $t){
             $taller = DB::SELECT("SELECT id, nombre from talleres where "
                     . "idticket = ".$t->id);
@@ -816,19 +849,19 @@ class AdminController extends Controller{
         $datos = ['info'=>$sql,'info2'=>$sql2,'pais'=>$pais];
         return view('registroParticipantes')->with('datos',$datos);
     }
-    
+
     public function IndicativoPais(){
         $sql = DB::SELECT("SELECT indicativo from pais where nombre  = '".request()->get('pais')."'");
         return response()->json([
             'info'=>$sql[0]->indicativo
             ]);
     }
-    
+
     public function ParticipanteUpdate(){
         DB::beginTransaction();
         try {
-            
-            
+
+
             DB::table('comprador_ticket')
             ->where('id', request()->get('idregistro'))
             ->update([
@@ -844,12 +877,12 @@ class AdminController extends Controller{
                 'direccion' => request()->get('direccion')
             ]);
             DB::commit();
-            return redirect()->route('ConfirmacionParticipantes',['id'=>request()->get('idP')]); 
+            return redirect()->route('ConfirmacionParticipantes',['id'=>request()->get('idP')]);
         } catch (\PDOException $exception) {
             error_log("Error - Crear Boleta: " . $exception->getMessage());
-            return redirect()->route('ConfirmacionParticipantes',['id'=>request()->get('idP')]); 
-            
+            return redirect()->route('ConfirmacionParticipantes',['id'=>request()->get('idP')]);
+
         }
     }
-   
+
 }

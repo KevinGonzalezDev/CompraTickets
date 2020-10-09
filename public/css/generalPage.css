@@ -3,7 +3,7 @@ To change this license header, choose License Headers in Project Properties.
 To change this template file, choose Tools | Templates
 and open the template in the editor.
 */
-/* 
+/*
     Created on : 3/09/2020, 04:43:55 PM
     Author     : Process
 */
@@ -32,7 +32,7 @@ html, body {
 .TitulosS{
     src: url("../webfonts/Criteria CF Extralight.otf");
     font-family: "Criteria CF Extralight";
-    
+
 }
 
 @font-face {
@@ -323,7 +323,7 @@ table{
     color:white;
     font-weight: bold;
     font-size:28px;
-    
+
     position: relative;
     top: -40%;
 }
@@ -379,7 +379,7 @@ ul li {
     align-content: center;
 }
 textarea{
-    resize: none;   
+    resize: none;
     border:0px;
 }
 .footerPage{
@@ -391,7 +391,7 @@ textarea{
     font-size:12px;
     font-family: "Criteria CF Extralight";
     src: url("../webfonts/Criteria CF Extralight.otf");
-    
+
 }
 .footerPage table{
     position:relative;
@@ -499,7 +499,7 @@ p,td,.form-check-inline{
 .ImagenBoletas2{
     width: 250px;
 	padding:5px;
-    
+
 }
 
 
@@ -612,7 +612,7 @@ p,td,.form-check-inline{
 .regresar-container{
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: left;
     align-items: center;
 }
 
@@ -635,4 +635,29 @@ p,td,.form-check-inline{
     font-size: 18px;
 }
 
+.consultas-container{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+}
+
+.consultas-container a{
+    color: #fff;
+    padding: .7em 2em .7em 2em;
+    background-color: #200073;
+    border-radius: 15px;
+    text-decoration: none;
+    transition: .6s;
+}
+
+.consultas-container a:hover{
+    background-color: #fff;
+    color: #000000;
+}
+
+.consultas-container span{
+    margin-right: .5em;
+    font-size: 18px;
+}
 /* END PAGINA LOGIN CONSULTAS */
