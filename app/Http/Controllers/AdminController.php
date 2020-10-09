@@ -25,11 +25,26 @@ Use Illuminate\Support\Facades\Response;
 use FilesystemIterator;
 use App\Http\Controllers\MailController;
 use App\Http\lib\PayU;
+use App;
 
 class AdminController extends Controller{
     //put your code here
     public function PayU(){
         Return view('formPayU');
+    }
+
+    public function LoginConsultas(){
+        Return view('LoginConsultas');
+    }
+
+    public function ConsultarUsuarios(){
+        $usuarios = App\comprador::all();
+        Return view('ConsultarUsuarios', compact('usuarios'));
+    }
+
+    public function SeleccionarUsuarios(){
+        //$SelectAllUsers = DB::SELECT("SELECT * FROM comprador");
+        //return view('ConsultarUsuarios')->with('SelectAllUsers', $SelectAllUsers);
     }
     
     public function Ingreso(){

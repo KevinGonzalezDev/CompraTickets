@@ -43,6 +43,12 @@ Route::GET('PayU', 'AdminController@PayU')->name('PayU');
 Route::GET('IngresoClientes', 'AdminController@IngresoClientes')->name('IngresoClientes');
 Route::post('LoginClientesEx', 'AdminController@LoginClientesEx')->name('LoginClientesEx');
 
+//Consultas
+Route::GET('LoginConsultas', 'AdminController@LoginConsultas')->name('LoginConsultas');
+Route::GET('ConsultarUsuarios', 'AdminController@ConsultarUsuarios')->name('ConsultarUsuarios');
+Route::GET('SeleccionarUsuarios', 'AdminController@SeleccionarUsuarios')->name('SeleccionarUsuarios');
+
+
 Route::get('ConfirmacionCompra', 'AdminController@ConfirmacionCompra')->name('ConfirmacionCompra');
 Route::get('formPayUP/{id}', 'AdminController@formPayUP')->name('formPayUP');
 Route::get('DatosPayU/{id}', 'AdminController@DatosPayU')->name('DatosPayU');
