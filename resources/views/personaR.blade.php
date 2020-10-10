@@ -342,7 +342,7 @@
                                     <span onclick ='nextPasoVal(0)' class = 'Bttn3'>CANCELAR COMPRA</span>
                                 </td>
                                 <td style = 'margin:0px auto;'>
-                                    <span onclick ='nextPasoVal(3)' class = 'Bttn'>CONTINUAR CON EL PAGO</span>
+                                    <span onclick ='nextPasoVal(3)' class = 'Bttn Bttn_prvnt_mltp_sbmt'>CONTINUAR CON EL PAGO</span>
                                 </td>
                             </tr>
                         </table>
@@ -476,6 +476,9 @@
         <script>
             $(document).ready(function () {
                 //nextPaso(0)
+				$('.Bttn_prvnt_mltp_sbmt').click(function(){
+                  $('.Bttn_prvnt_mltp_sbmt').attr('disabled', true);
+                });
             })
         </script>
 @endsection
